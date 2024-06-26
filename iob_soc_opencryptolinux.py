@@ -28,6 +28,8 @@ from iob_axistream_out import iob_axistream_out
 from iob_dma import iob_dma
 from verilog_gen import insert_verilog_in_module
 
+from iob_ila import iob_ila
+
 
 class iob_soc_opencryptolinux(iob_soc):
     name = "iob_soc_opencryptolinux"
@@ -103,6 +105,17 @@ class iob_soc_opencryptolinux(iob_soc):
                 },
             )
         )
+        cls.ila0_instance = iob_ila(
+            "ILA0",
+            "Tester Integrated Logic Analyzer for SUT signals",
+            parameters={
+                "BUFFER_W": "7",
+                "SIGNAL_W": "64",
+                "TRIGGER_W": "1",
+                "CLK_COUNTER": "1",
+            },
+        )
+        cls.peripherals.append(cls.ila0_instance)
 
         # Add custom N_SLAVES and N_SLAVES_W
         cls.confs += [
@@ -171,6 +184,7 @@ class iob_soc_opencryptolinux(iob_soc):
                 iob_axistream_in,
                 iob_axistream_out,
                 iob_dma,
+                iob_ila,
             ]
             + extra_submodules
         )
@@ -346,6 +360,34 @@ endif
     assign AXISTREAMOUT0_axis_arst_i = arst_i;
              """,
             cls.build_dir + f"/hardware/src/{cls.name}.v",
+        )
+
+        # Modify iob_soc_opencryptolinux.v to include ILA probe wires
+        iob_ila.generate_system_wires(
+            cls.ila0_instance,
+            f"hardware/src/{cls.name}.v",  # Name of the system file to generate the probe wires
+            sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
+            trigger_list=[
+                "AXISTREAMOUT0.axis_tvalid_o | AXISTREAMOUT0.sys_tvalid_i",
+            ],  # List of signals to use as triggers
+            probe_list=[  # List of signals to probe
+                ("AXISTREAMOUT0.axis_tdata_o", 32),
+                ("AXISTREAMOUT0.sys_tdata_i", 32),
+            ],
+        )
+        # Targets to copy ila_data.bin from remote machines
+        append_str_config_build_mk(
+            """
+
+# Targets to copy ila_data.bin from remote machines
+copy_remote_fpga_ila_data:
+scp $(BOARD_USER)@$(BOARD_SERVER):$(REMOTE_FPGA_DIR)/ila_data.bin . 2> /dev/null | true
+copy_remote_simulation_ila_data:
+scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 2> /dev/null | true
+.PHONY: copy_remote_fpga_ila_data copy_remote_simulation_ila_data
+
+            """,
+            cls.build_dir,
         )
 
     @classmethod
@@ -1070,6 +1112,95 @@ endif
                     "if_name": "axistream",
                     "port": "axis_tlast_o",
                     "bits": [],
+                },
+            ),
+        ]
+        cls.peripheral_portmap += [
+            # ILA IO --- Connect IOs of Integrated Logic Analyzer to internal system signals
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "signal",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "trigger",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "ila",
+                    "port": "sampling_clk",
+                    "bits": [],
+                },
+                {
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
+                },
+            ),
+            # ILA DMA
+            # Connect these signals to internal floating wires.
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tvalid_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tvalid_i",
+                    "bits": [1],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tready_i",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tready_o",
+                    "bits": [1],
+                },
+            ),
+            (
+                {
+                    "corename": "ILA0",
+                    "if_name": "dma",
+                    "port": "tdata_o",
+                    "bits": [],
+                },
+                {
+                    "corename": "DMA0",
+                    "if_name": "dma_input",
+                    "port": "tdata_i",
+                    "bits": list(range(32, 64)),
                 },
             ),
         ]

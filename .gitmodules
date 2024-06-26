@@ -25,3 +25,6 @@
 [submodule "submodules/DMA"]
 	path = submodules/DMA
 	url = git@github.com:IObundle/iob-dma.git
+[submodule "submodules/ILA"]
+	path = submodules/ILA
+	url = git@github.com:IObundle/iob-ila.git

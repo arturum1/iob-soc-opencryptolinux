@@ -6,6 +6,10 @@
 #include "iob-axistream-in-user.h"
 #include "iob-axistream-out-user.h"
 #include "iob-dma-user.h"
+#include "iob-ila-user.h"
+
+#define ILA0_BUFFER_W 7
+#define BUFFER_SIZE 5096
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,14 +23,41 @@ void send_axistream();
 void receive_axistream();
 
 int main() {
+    FILE *f;
+    char buffer[BUFFER_SIZE];
+    int i;
     // init axistream
     iob_sysfs_write_file(IOB_AXISTREAM_IN_SYSFILE_ENABLE, 1);
     iob_sysfs_write_file(IOB_AXISTREAM_OUT_SYSFILE_ENABLE, 1);
+    ila_init();
+    // Enable ILA circular buffer
+    // This allows for continuous sampling while the enable signal is active
+    ila_set_circular_buffer(1);
+    // Enable all ILA triggers
+    ila_enable_all_triggers();
 
     // Send byte stream via AXI stream
     send_axistream();
     // Read byte stream via AXI stream
     receive_axistream();
+
+    // Disable all ILA triggers
+    ila_disable_all_triggers();
+
+    // Allocate memory for ILA output data
+    uint32_t ila_data_size = ila_output_data_size(ILA0_BUFFER_SIZE, ILA0_DWORD_SIZE);
+
+    // Write data to allocated memory
+    uint32_t latest_sample_index = ila_number_samples();
+    ila_output_data(buffer, latest_sample_index, (latest_sample_index-1)%ILA0_BUFFER_SIZE, ILA0_BUFFER_SIZE, ILA0_DWORD_SIZE);
+
+    // Write to file
+    f = fopen("ila_data.bin", "w");
+    fwrite(buffer, 1, ila_data_size-1, f); //Don't send last byte (\0)
+    fclose(f);
+    // Send file via sz
+    i = system("sz -e ila_data.bin");
+    if (i != 0) puts("File transfer of ila_data.bin via sz failed!\n");
 }
 
 

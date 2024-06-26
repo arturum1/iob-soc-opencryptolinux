@@ -95,6 +95,7 @@ build-linux-opensbi:
 MODULE_NAMES += iob_dma
 MODULE_NAMES += iob_axistream_in
 MODULE_NAMES += iob_axistream_out
+MODULE_NAMES += iob_ila
 
 build-driver-headers:
 	@$(foreach module,$(MODULE_NAMES), \

@@ -28,9 +28,17 @@ expect {
 }
 
 send "rz"
-! sz ../../software/tests/dma/dma_demo ../../software/tests/dma/runTest.sh ../../software/tests/dma/drivers/iob_dma.ko ../../software/tests/dma/drivers/iob_axistream_in.ko ../../software/tests/dma/drivers/iob_axistream_out.ko
+! sz ../../software/tests/dma/dma_demo ../../software/tests/dma/runTest.sh ../../software/tests/dma/drivers/iob_dma.ko ../../software/tests/dma/drivers/iob_axistream_in.ko ../../software/tests/dma/drivers/iob_axistream_out.ko ../../software/tests/dma/drivers/iob_ila.ko
 
 send "./runTest.sh"
+
+print "\n[minicom] Waiting to receive ila_data.bin..."
+# expect has default timeout of 60 seconds
+expect {
+    "B00000000000000"
+    timeout 300
+}
+! rz
 
 expect {
     "#"
