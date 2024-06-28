@@ -15,8 +15,8 @@
 #define ILA_REDUCE_TYPE_AND 1
 
 // Defines from generated file: ILA0.h
-#define ILA0_DWORD_SIZE 2
-#define ILA0_BYTE_SIZE 7
+#define ILA0_DWORD_SIZE 5
+#define ILA0_BYTE_SIZE 19
 #define ILA0_BUFFER_SIZE (1<<ILA0_BUFFER_W)
 
 void ila_init();

@@ -30,6 +30,21 @@ from verilog_gen import insert_verilog_in_module
 
 from iob_ila import iob_ila
 
+ILA_PROBE_LIST = [  # List of signals to probe
+    ("AXISTREAMOUT0.axis_tvalid_o", 1),
+    ("AXISTREAMOUT0.axis_tdata_o", 32),
+    ("AXISTREAMOUT0.sys_tvalid_i", 1),
+    ("AXISTREAMOUT0.sys_tdata_i", 32),
+    ("DMA0_axi_arvalid_o", 1),
+    ("DMA0_axi_araddr_o", 32),
+    ("DMA0_axi_rvalid_i", 1),
+    ("DMA0_axi_rdata_i", 32),
+]
+
+ILA_PROBE_BITS = 0
+for entry in ILA_PROBE_LIST:
+    ILA_PROBE_BITS += entry[1]
+
 
 class iob_soc_opencryptolinux(iob_soc):
     name = "iob_soc_opencryptolinux"
@@ -110,7 +125,7 @@ class iob_soc_opencryptolinux(iob_soc):
             "Tester Integrated Logic Analyzer for SUT signals",
             parameters={
                 "BUFFER_W": "7",
-                "SIGNAL_W": "64",
+                "SIGNAL_W": str(ILA_PROBE_BITS),
                 "TRIGGER_W": "1",
                 "CLK_COUNTER": "1",
             },
@@ -358,6 +373,12 @@ endif
     assign AXISTREAMOUT0_axis_clk_i = clk_i;
     assign AXISTREAMOUT0_axis_cke_i = cke_i;
     assign AXISTREAMOUT0_axis_arst_i = arst_i;
+    // Debug ILA
+    assign ILA0_tready_i = 1'b0;
+    wire DMA0_axi_arvalid_o = axi_arvalid_o            [3*1     +:1*1];
+    wire [AXI_ADDR_W-1:0] DMA0_axi_araddr_o = axi_araddr_o           [3*AXI_ADDR_W     +:1*AXI_ADDR_W];
+    wire DMA0_axi_rvalid_i = axi_rvalid_i            [3*1     +:1*1];
+    wire [AXI_DATA_W-1:0] DMA0_axi_rdata_i = axi_rdata_i            [3*AXI_DATA_W     +:1*AXI_DATA_W];
              """,
             cls.build_dir + f"/hardware/src/{cls.name}.v",
         )
@@ -368,12 +389,9 @@ endif
             f"hardware/src/{cls.name}.v",  # Name of the system file to generate the probe wires
             sampling_clk="clk_i",  # Name of the internal system signal to use as the sampling clock
             trigger_list=[
-                "AXISTREAMOUT0.axis_tvalid_o | AXISTREAMOUT0.sys_tvalid_i",
+                "AXISTREAMOUT0.axis_tvalid_o | AXISTREAMOUT0.sys_tvalid_i | DMA0_axi_arvalid_o | DMA0_axi_rvalid_i",
             ],  # List of signals to use as triggers
-            probe_list=[  # List of signals to probe
-                ("AXISTREAMOUT0.axis_tdata_o", 32),
-                ("AXISTREAMOUT0.sys_tdata_i", 32),
-            ],
+            probe_list=ILA_PROBE_LIST,
         )
         # Targets to copy ila_data.bin from remote machines
         append_str_config_build_mk(
@@ -955,7 +973,7 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tvalid_i",
-                    "bits": [0],
+                    "bits": [],
                 },
             ),
             (
@@ -969,7 +987,7 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tready_o",
-                    "bits": [0],
+                    "bits": [],
                 },
             ),
             (
@@ -983,7 +1001,7 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "corename": "DMA0",
                     "if_name": "dma_input",
                     "port": "tdata_i",
-                    "bits": list(range(32)),
+                    "bits": [],
                 },
             ),
             (
@@ -1169,10 +1187,10 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "bits": [],
                 },
                 {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tvalid_i",
-                    "bits": [1],
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
                 },
             ),
             (
@@ -1183,10 +1201,10 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "bits": [],
                 },
                 {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tready_o",
-                    "bits": [1],
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
                 },
             ),
             (
@@ -1197,10 +1215,10 @@ scp $(SIM_SCP_FLAGS) $(SIM_USER)@$(SIM_SERVER):$(REMOTE_SIM_DIR)/ila_data.bin . 
                     "bits": [],
                 },
                 {
-                    "corename": "DMA0",
-                    "if_name": "dma_input",
-                    "port": "tdata_i",
-                    "bits": list(range(32, 64)),
+                    "corename": "internal",
+                    "if_name": "ILA0",
+                    "port": "",
+                    "bits": [],
                 },
             ),
         ]

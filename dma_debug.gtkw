@@ -1,0 +1,41 @@
+[*]
+[*] GTKWave Analyzer v3.3.113 (w)1999-2022 BSI
+[*] Fri Jun 28 03:18:02 2024
+[*]
+[dumpfile] "/home/artur/iobundle/iob-soc-opencryptolinux/ila_data.vcd"
+[dumpfile_mtime] "Fri Jun 28 03:09:03 2024"
+[dumpfile_size] 23754
+[savefile] "/home/artur/iobundle/iob-soc-opencryptolinux/dma_debug.gtkw"
+[timestart] 226
+[size] 3830 2067
+[pos] -1 -1
+*-1.203274 240 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[sst_width] 262
+[signals_width] 238
+[sst_expanded] 1
+[sst_vpaned_height] 668
+@22
+TOP.ILA0.sampling_clk_counter[15:0]
+@201
+-
+@22
+TOP.DMA0_axi_araddr_o[31:0]
+@28
+TOP.DMA0_axi_arvalid_o
+@22
+TOP.DMA0_axi_rdata_i[31:0]
+@28
+TOP.DMA0_axi_rvalid_i
+@200
+-
+@22
+TOP.AXISTREAMOUT0.axis_tdata_o[31:0]
+@28
+TOP.AXISTREAMOUT0.axis_tvalid_o
+@22
+TOP.AXISTREAMOUT0.sys_tdata_i[31:0]
+@28
+TOP.AXISTREAMOUT0.sys_tvalid_i
+[pattern_trace] 1
+[pattern_trace] 0
